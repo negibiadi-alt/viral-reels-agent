@@ -1,0 +1,52 @@
+"""Application settings loaded from environment."""
+from pathlib import Path
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    # Apify
+    apify_token: str = ""
+
+    # Telegram
+    telegram_bot_token: str = ""
+    telegram_approver_chat_id: int = 0
+
+    # Instagram Graph API
+    ig_user_id: str = ""
+    ig_access_token: str = ""
+
+    # YouTube
+    yt_client_secrets_file: Path = Path("./secrets/yt_client_secret.json")
+    yt_token_file: Path = Path("./secrets/yt_token.json")
+
+    # DB
+    database_url: str = "sqlite:///./storage/app.db"
+
+    # Runtime
+    timezone: str = "Europe/Istanbul"
+    daily_candidates: int = 5
+    max_candidate_age_days: int = 7
+    dry_run: bool = True
+
+    # Viral thresholds
+    min_views: int = 50_000
+    min_engagement_rate: float = 0.03
+    min_views_per_hour: int = 1000
+
+    # Storage
+    download_dir: Path = Path("./storage/downloaded")
+    processed_dir: Path = Path("./storage/processed")
+
+    # Claude
+    anthropic_api_key: str = ""
+
+
+settings = Settings()
