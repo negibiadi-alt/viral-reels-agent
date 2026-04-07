@@ -33,11 +33,6 @@ def discover_for_topic(topic: Topic) -> list[RawCandidate]:
     except Exception as exc:
         logger.exception("IG scrape failed for {}: {}", topic.name, exc)
 
-    try:
-        raw.extend(fetch_youtube_shorts(keywords, limit=30))
-    except Exception as exc:
-        logger.exception("YT scrape failed for {}: {}", topic.name, exc)
-
     return rank_and_filter(raw, top_n=settings.daily_candidates * 3)
 
 
