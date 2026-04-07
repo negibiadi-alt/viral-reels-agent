@@ -13,6 +13,7 @@ polling loop, started on FastAPI startup.
 from __future__ import annotations
 
 import asyncio
+from collections import deque
 from contextlib import asynccontextmanager
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -23,6 +24,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 
 from src.approval.telegram_bot import build_application, push_daily_candidates
+from src import log_buffer
 from src.config import settings
 from src.db import SessionLocal, init_db
 from src.db.models import Candidate, CandidateStatus, ScheduledPost, Topic

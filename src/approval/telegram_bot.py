@@ -40,6 +40,7 @@ def _main_keyboard() -> InlineKeyboardMarkup:
         [InlineKeyboardButton("📋 Adayları Göster", callback_data="pending")],
         [InlineKeyboardButton("➕ Konu Ekle", callback_data="add_topic")],
         [InlineKeyboardButton("📊 Konularım", callback_data="topics")],
+        [InlineKeyboardButton("📜 Loglar", callback_data="logs")],
     ])
 
 
@@ -158,6 +159,19 @@ async def _cb_topics(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
         await query.edit_message_text(text, parse_mode=ParseMode.HTML, reply_markup=_main_keyboard())
     finally:
         session.close()
+    return MAIN
+
+
+async def _cb_logs(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    from src.log_buffer import get_recent
+    query = update.callback_query
+    await query.answer()
+    logs = get_recent(20)
+    await query.edit_message_text(
+        f"📜 <b>Son Loglar:</b>\n\n<code>{logs}</code>",
+        parse_mode=ParseMode.HTML,
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Ana Menü", callback_data="menu")]]),
+    )
     return MAIN
 
 
@@ -287,6 +301,8 @@ def build_application() -> Application:
                 CallbackQueryHandler(_cb_pending, pattern="^pending$"),
                 CallbackQueryHandler(_cb_add_topic, pattern="^add_topic$"),
                 CallbackQueryHandler(_cb_topics, pattern="^topics$"),
+                CallbackQueryHandler(_cb_logs, pattern="^logs$"),
+                CallbackQueryHandler(_start, pattern="^menu$"),
             ],
             WAITING_TOPIC_NAME: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, _recv_topic_name),
