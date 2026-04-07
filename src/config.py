@@ -19,9 +19,13 @@ class Settings(BaseSettings):
     telegram_bot_token: str = ""
     telegram_approver_chat_id: int = 0
 
-    # Instagram Graph API
+    # Instagram Graph API (opsiyonel)
     ig_user_id: str = ""
     ig_access_token: str = ""
+
+    # Instagram instagrapi (alternatif)
+    ig_username: str = ""
+    ig_password: str = ""
 
     # YouTube
     yt_client_secrets_file: Path = Path("./secrets/yt_client_secret.json")
