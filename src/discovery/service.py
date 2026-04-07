@@ -38,12 +38,12 @@ def discover_for_topic(topic: Topic) -> list[RawCandidate]:
     except Exception as exc:
         logger.exception("YouTube scrape failed for {}: {}", topic.name, exc)
 
-    # Instagram (Apify, yedek)
-    if settings.apify_token:
-        try:
-            raw.extend(fetch_instagram_reels(hashtags, limit=20))
-        except Exception as exc:
-            logger.exception("IG scrape failed for {}: {}", topic.name, exc)
+    # Instagram (Apify) — şimdilik devre dışı
+    # if settings.apify_token:
+    #     try:
+    #         raw.extend(fetch_instagram_reels(hashtags, limit=20))
+    #     except Exception as exc:
+    #         logger.exception("IG scrape failed for {}: {}", topic.name, exc)
 
     logger.info("Topic '{}': {} raw candidates before filter", topic.name, len(raw))
     return rank_and_filter(raw, top_n=settings.daily_candidates * 3)
