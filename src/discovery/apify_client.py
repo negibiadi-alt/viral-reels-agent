@@ -17,7 +17,7 @@ from src.config import settings
 from src.db.models import Platform
 
 IG_ACTOR = "apify/instagram-scraper"
-YT_ACTOR = "streamers/youtube-scraper"
+YT_ACTOR = "bernardo/youtube-scraper"
 
 
 @dataclass

@@ -41,9 +41,9 @@ class Settings(BaseSettings):
     dry_run: bool = True
 
     # Viral thresholds
-    min_views: int = 50_000
-    min_engagement_rate: float = 0.03
-    min_views_per_hour: int = 1000
+    min_views: int = 1_000
+    min_engagement_rate: float = 0.01
+    min_views_per_hour: int = 10
 
     # Storage
     download_dir: Path = Path("./storage/downloaded")
