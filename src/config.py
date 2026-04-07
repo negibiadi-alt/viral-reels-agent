@@ -49,6 +49,12 @@ class Settings(BaseSettings):
     download_dir: Path = Path("./storage/downloaded")
     processed_dir: Path = Path("./storage/processed")
 
+    # YouTube Data API v3 (sadece API key, OAuth yok)
+    youtube_api_key: str = ""
+
+    # TikTok — Omkar Cloud (ücretsiz 5K/ay)
+    omkar_api_key: str = ""
+
     # Claude
     anthropic_api_key: str = ""
 

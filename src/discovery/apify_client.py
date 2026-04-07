@@ -16,8 +16,7 @@ from loguru import logger
 from src.config import settings
 from src.db.models import Platform
 
-IG_ACTOR = "apify/instagram-scraper"
-YT_ACTOR = "bernardo/youtube-scraper"
+IG_ACTOR = "apidojo/instagram-scraper-api"
 
 
 @dataclass
@@ -52,17 +51,14 @@ def _parse_dt(value: Any) -> datetime | None:
 
 
 def fetch_instagram_reels(hashtags: list[str], limit: int = 30) -> list[RawCandidate]:
-    """Scrape Instagram reels by hashtag."""
+    """Scrape Instagram reels by hashtag via apidojo/instagram-scraper-api."""
     client = _client()
     run_input = {
-        "search": hashtags,
-        "searchType": "hashtag",
-        "searchLimit": limit,
-        "resultsType": "posts",
+        "hashtags": hashtags,
         "resultsLimit": limit,
-        "addParentData": False,
+        "mediaType": "reels",
     }
-    logger.info("Apify IG scraper: hashtags={} limit={}", hashtags, limit)
+    logger.info("Apify IG scraper (apidojo): hashtags={} limit={}", hashtags, limit)
     run = client.actor(IG_ACTOR).call(run_input=run_input)
     items = list(client.dataset(run["defaultDatasetId"]).iterate_items())
     return [_ig_to_candidate(item) for item in items if _is_reel(item)]

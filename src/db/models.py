@@ -11,6 +11,7 @@ from .session import Base
 class Platform(StrEnum):
     INSTAGRAM = "instagram"
     YOUTUBE = "youtube"
+    TIKTOK = "tiktok"
 
 
 class CandidateStatus(StrEnum):
