@@ -30,7 +30,7 @@ def fetch_tiktok_videos(keywords: list[str], limit: int = 20) -> list[RawCandida
         try:
             r = httpx.get(
                 f"{BASE_URL}/search/videos",
-                params={"keyword": keyword, "count": min(limit, 20)},
+                params={"keyword": keyword, "count": min(limit, 20), "region": "TR"},
                 headers=headers,
                 timeout=30,
             )

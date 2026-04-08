@@ -39,6 +39,8 @@ def fetch_youtube_shorts(queries: list[str], limit: int = 20) -> list[RawCandida
                 "order": "viewCount",
                 "publishedAfter": published_after,
                 "maxResults": min(limit, 50),
+                "regionCode": "TR",
+                "relevanceLanguage": "tr",
             }, timeout=30)
             r.raise_for_status()
             items = r.json().get("items", [])
