@@ -28,6 +28,8 @@ from telegram.ext import (
 from src.config import settings
 from src.db import SessionLocal
 from src.db.models import Candidate, CandidateStatus, Topic
+from src.discovery.service import discover_and_save_for_topic, run_discovery
+from src.log_buffer import get_recent
 
 # --- States ---
 MAIN, WAITING_TOPIC_NAME, WAITING_TOPIC_KEYWORDS = range(3)
@@ -99,7 +101,6 @@ async def _send_pending(chat_id: int, ctx: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def _do_discovery(chat_id: int, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-    from src.discovery.service import run_discovery
     inserted = run_discovery()
     if inserted:
         await ctx.bot.send_message(chat_id=chat_id, text=f"✅ {len(inserted)} yeni aday bulundu!")
@@ -135,7 +136,7 @@ async def _cb_run(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     await query.answer()
     session = SessionLocal()
     try:
-        topics = session.execute(select(Topic).where(Topic.active == True)).scalars().all()
+        topics = session.execute(select(Topic).where(Topic.active.is_(True))).scalars().all()
         if not topics:
             await query.edit_message_text(
                 "📭 Konu yok. Önce konu ekle!",
@@ -155,48 +156,19 @@ async def _cb_run(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def _cb_run_topic(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    """Seçilen konuyu tara."""
     query = update.callback_query
     await query.answer()
     topic_id = int(query.data.split(":")[1])
+
     session = SessionLocal()
     try:
         topic = session.get(Topic, topic_id)
         name = topic.name if topic else "?"
     finally:
         session.close()
+
     await query.edit_message_text(f"🔍 <b>{name}</b> taranıyor…", parse_mode=ParseMode.HTML)
-    from src.discovery.service import discover_for_topic
-    from src.db import SessionLocal as SL
-    from src.db.models import CandidateStatus
-    from datetime import datetime
-    session2 = SL()
-    inserted = []
-    try:
-        topic = session2.get(Topic, topic_id)
-        if topic:
-            from src.discovery.apify_client import RawCandidate
-            from src.discovery.service import _exists
-            from src.discovery.viral_filter import viral_score
-            raw = discover_for_topic(topic)
-            raw.sort(key=viral_score, reverse=True)
-            for rc in raw:
-                if _exists(session2, rc.source_url):
-                    continue
-                from src.db.models import Candidate, Platform
-                cand = Candidate(
-                    topic_id=topic.id, platform=rc.platform, source_url=rc.source_url,
-                    thumbnail_url=rc.thumbnail_url, caption=rc.caption, author=rc.author,
-                    views=rc.views, likes=rc.likes, comments=rc.comments, posted_at=rc.posted_at,
-                    metrics={"engagement_rate": (rc.likes + rc.comments) / max(rc.views, 1)},
-                    status=CandidateStatus.PENDING,
-                )
-                session2.add(cand)
-                inserted.append(cand)
-            topic.last_run_at = datetime.utcnow()
-            session2.commit()
-    finally:
-        session2.close()
+    inserted = discover_and_save_for_topic(topic_id)
     chat_id = update.effective_chat.id
     if inserted:
         await ctx.bot.send_message(chat_id=chat_id, text=f"✅ {len(inserted)} yeni aday bulundu!")
@@ -228,7 +200,7 @@ async def _cb_topics(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     await query.answer()
     session = SessionLocal()
     try:
-        rows = session.execute(select(Topic).where(Topic.active == True)).scalars().all()
+        rows = session.execute(select(Topic).where(Topic.active.is_(True))).scalars().all()
         if not rows:
             await query.edit_message_text(
                 "📭 Henüz konu eklenmemiş.",
@@ -276,7 +248,6 @@ async def _cb_del_topic(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def _cb_logs(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    from src.log_buffer import get_recent
     query = update.callback_query
     await query.answer()
     logs = get_recent(20)

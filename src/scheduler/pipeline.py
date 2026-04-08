@@ -20,12 +20,13 @@ from src.publishing.yt_publisher import publish_short
 from src.scheduler.peak_hours import next_available_slot
 
 
-def _pick_approved(session: Session) -> list[Candidate]:
+def _pick_approved(session: Session, limit: int = 50) -> list[Candidate]:
     return (
         session.execute(
             select(Candidate)
             .where(Candidate.status == CandidateStatus.APPROVED)
             .order_by(Candidate.discovered_at.asc())
+            .limit(limit)
         )
         .scalars()
         .all()

@@ -44,20 +44,24 @@ def fetch_tiktok_videos(keywords: list[str], limit: int = 20) -> list[RawCandida
         except Exception as exc:
             logger.exception("TikTok fetch failed for '{}': {}", keyword, exc)
 
-    # Trending feed (keyword bağımsız)
+    return results
+
+
+def fetch_tiktok_trending(limit: int = 20) -> list[RawCandidate]:
+    """Trending feed — topic-agnostic, call once per discovery batch."""
+    if not settings.omkar_api_key:
+        return []
+    headers = {"x-api-key": settings.omkar_api_key}
     try:
         r = httpx.get(f"{BASE_URL}/trending", headers=headers, timeout=30)
         r.raise_for_status()
         videos = r.json().get("data", {}).get("videos", [])
-        for v in videos[:limit]:
-            cand = _parse_video(v)
-            if cand:
-                results.append(cand)
-        logger.info("TikTok: {} trending videos fetched", len(videos))
+        results = [c for v in videos[:limit] if (c := _parse_video(v))]
+        logger.info("TikTok: {} trending videos fetched", len(results))
+        return results
     except Exception as exc:
         logger.warning("TikTok trending failed: {}", exc)
-
-    return results
+        return []
 
 
 def _parse_video(item: dict[str, Any]) -> RawCandidate | None:
