@@ -9,19 +9,35 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy # Sadece container'ın açılmasını değil, DB'nin hazır olmasını bekle
     restart: unless-stopped
+    networks:
+      - viral-network
 
   postgres:
     image: postgres:16-alpine
     container_name: viral-reels-db
     environment:
-      POSTGRES_USER: viral
-      POSTGRES_PASSWORD: viral
-      POSTGRES_DB: viral_reels
+      # Şifreleri .env dosyasından al, yoksa varsayılan olarak 'viral' kullan
+      POSTGRES_USER: ${DB_USER:-viral}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-viral}
+      POSTGRES_DB: ${DB_NAME:-viral_reels}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # Veritabanının bağlantı kabul edip etmediğini kontrol et
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-viral} -d ${DB_NAME:-viral_reels}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
+    networks:
+      - viral-network
 
 volumes:
   pgdata:
+
+networks:
+  viral-network:
+    driver: bridge
