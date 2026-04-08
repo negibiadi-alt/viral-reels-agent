@@ -18,6 +18,7 @@ from src.db.models import Platform, ScheduledPost
 PEAK_SLOTS: dict[Platform, list[time]] = {
     Platform.INSTAGRAM: [time(11, 0), time(14, 0), time(19, 0), time(21, 0)],
     Platform.YOUTUBE: [time(12, 0), time(17, 0), time(20, 0), time(22, 0)],
+    Platform.TIKTOK: [time(12, 0), time(17, 0), time(20, 0), time(22, 0)],
 }
 
 

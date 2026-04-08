@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     # YouTube
     yt_client_secrets_file: Path = Path("./secrets/yt_client_secret.json")
     yt_token_file: Path = Path("./secrets/yt_token.json")
+    yt_token_json: str = ""  # Render'da JSON içeriği direkt env var olarak
 
     # DB
     database_url: str = "sqlite:///./storage/app.db"

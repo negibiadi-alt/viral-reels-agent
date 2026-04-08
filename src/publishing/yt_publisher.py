@@ -1,15 +1,16 @@
 """YouTube Shorts publisher via YouTube Data API v3.
 
-First run interactively (outside the scheduler) to create the OAuth token:
-    python -m src.publishing.yt_publisher auth
+Render'da tarayıcı açılamaz. Token'ı bootstrap scripti ile al:
+    python scripts/bootstrap_yt_auth.py
+Çıkan JSON'u Render'da YT_TOKEN_JSON env var'ına yapıştır.
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from loguru import logger
@@ -24,23 +25,33 @@ class YTPublishError(RuntimeError):
 
 
 def _load_credentials() -> Credentials:
-    token_path = settings.yt_token_file
     creds: Credentials | None = None
-    if token_path.exists():
-        creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
-    if creds and creds.valid:
+
+    # 1. Env var'dan oku (Render production)
+    if settings.yt_token_json:
+        creds = Credentials.from_authorized_user_info(
+            json.loads(settings.yt_token_json), SCOPES
+        )
+
+    # 2. Dosyadan oku (lokal geliştirme)
+    elif settings.yt_token_file.exists():
+        creds = Credentials.from_authorized_user_file(str(settings.yt_token_file), SCOPES)
+
+    else:
+        raise YTPublishError(
+            "YouTube token bulunamadı. "
+            "Laptop'ta çalıştır: python scripts/bootstrap_yt_auth.py"
+        )
+
+    if creds.valid:
         return creds
-    if creds and creds.expired and creds.refresh_token:
+
+    if creds.expired and creds.refresh_token:
         creds.refresh(Request())
-        token_path.write_text(creds.to_json())
+        logger.info("YouTube token yenilendi.")
         return creds
-    if not settings.yt_client_secrets_file.exists():
-        raise YTPublishError(f"client secrets not found: {settings.yt_client_secrets_file}")
-    flow = InstalledAppFlow.from_client_secrets_file(str(settings.yt_client_secrets_file), SCOPES)
-    creds = flow.run_local_server(port=0)
-    token_path.parent.mkdir(parents=True, exist_ok=True)
-    token_path.write_text(creds.to_json())
-    return creds
+
+    raise YTPublishError("YouTube token geçersiz ve refresh token yok. Bootstrap'ı tekrar yap.")
 
 
 def publish_short(video_path: Path, title: str, description: str, tags: list[str] | None = None) -> str:
@@ -75,11 +86,3 @@ def publish_short(video_path: Path, title: str, description: str, tags: list[str
         raise YTPublishError(f"upload failed: {response}")
     logger.info("YT published: https://youtube.com/shorts/{}", video_id)
     return video_id
-
-
-if __name__ == "__main__":
-    import sys
-
-    if len(sys.argv) > 1 and sys.argv[1] == "auth":
-        _load_credentials()
-        print("Auth complete. Token saved to:", settings.yt_token_file)
